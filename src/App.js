@@ -1,74 +1,171 @@
 // App.js
-// ShinyCard
-
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import "./styles.css";
 
-import coverImage from "./images/card-image.png";
-import avatarImage from "./images/card-avatar.png";
-import backgroundImage from "./images/card-background.jpg";
+import cardBackground from "./images/card-background.jpg";
+import cardImage from "./images/card-image.png";
+import cardAvatar from "./images/card-avatar.png";
 
-function App() {
+export default function App() {
+  const [cardTransform, setCardTransform] = useState("");
+  const [gradientAngle, setGradientAngle] = useState(45);
+  const [shineX, setShineX] = useState(0);
+  const [shineY, setShineY] = useState(0);
+
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMoveCard = (e) => {
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = (rect.width / 2 - (e.clientX - rect.left)) / -20;
+      const y = (rect.height / 2 - (e.clientY - rect.top)) / -20;
+      const angle = Math.atan2(y, x) * (180 / Math.PI);
+      setCardTransform(`rotateY(${x}deg) rotateX(${y}deg)`);
+      setGradientAngle(angle);
+      setShineX(e.clientX - rect.left);
+      setShineY(e.clientY - rect.top);
+    };
+
+    const handleMouseLeaveCard = () => {
+      setCardTransform("");
+    };
+
+    const cardElement = cardRef.current;
+    if (cardElement) {
+      cardElement.addEventListener("mousemove", handleMouseMoveCard);
+      cardElement.addEventListener("mouseleave", handleMouseLeaveCard);
+    }
+
+    return () => {
+      if (cardElement) {
+        cardElement.removeEventListener("mousemove", handleMouseMoveCard);
+        cardElement.removeEventListener("mouseleave", handleMouseLeaveCard);
+      }
+    };
+  }, []);
+
   return (
-    <Container>
-      <Card>
-        <CoverImage src={coverImage} alt="Cover" />
-        <CardContent>
-          <Title>Build beautiful apps with GPT4 and Midjourney</Title>
-          <Divider />
-          <Subtitle>40 sections - 5 hours</Subtitle>
-          <Text>
-            Hands-on course teaching about all the techniques for turning a
-            Midjourney inspiration into a real working design with interactions
-            in Figma.
-          </Text>
-          <Author>
-            <Avatar src={avatarImage} alt="Author Avatar" />
-            <AuthorName>Taught by Meng To</AuthorName>
-          </Author>
-        </CardContent>
+    <AppContainer>
+      <Card
+        ref={cardRef}
+        cardTransform={cardTransform}
+        gradientAngle={gradientAngle}
+        shineX={shineX}
+        shineY={shineY}
+      >
+        <CardImageOutline gradientAngle={gradientAngle} />
+        <CardImage src={cardImage} alt="Card Image" />
+        <CardTitle>Build beautiful apps with GPT4 and Midjourney</CardTitle>
+        <Divider gradientAngle={gradientAngle} />
+        <CardSubtitle>40 sections - 5 hours</CardSubtitle>
+        <CardText>
+          Hands-on course teaching about all the techniques for turning a
+          Midjourney inspiration into a real working design with interactions in
+          Figma. Perfect for beginners who don't want...
+        </CardText>
+        <Author>
+          <AuthorAvatar alt="Author Avatar" gradientAngle={gradientAngle} />
+          <AuthorName>Taught by Meng To</AuthorName>
+        </Author>
       </Card>
-    </Container>
+    </AppContainer>
   );
 }
 
-export default App;
+const AppContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #2d2d2d;
+  background-image: url(${cardBackground});
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin: 0px;
+  padding: 0px;
+  perspective: 1000px;
+
+  * {
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+`;
 
 const Card = styled.div`
-  width: 360px;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  position: relative;
   background: rgba(0, 0, 0, 0.6);
+  background-image: radial-gradient(
+    circle at ${(props) => props.shineX}px ${(props) => props.shineY}px,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    transparent 70%
+  );
+  color: #eee;
+  border-radius: 10px;
   box-shadow: 0px 30px 60px rgba(0, 0, 0, 0.1), 0px 30px 60px rgba(0, 0, 0, 0.5);
+  max-width: 300px;
   backdrop-filter: blur(10px);
-  /* Note: backdrop-filter has minimal browser support */
-
-  border-radius: 10px;
   padding: 20px;
+  transform: ${(props) => props.cardTransform};
+
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+
+  ::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(
+      ${(props) => props.gradientAngle}deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.7) 50%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    filter: blur(1px);
+  }
 `;
 
-const CoverImage = styled.img`
+const CardImage = styled.img`
   width: 100%;
-  height: 320px;
-  object-fit: cover;
   border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
-const CardContent = styled.div`
-  padding-top: 20px;
+const CardImageOutline = styled.div`
+  width: 302px;
+  height: 302px;
+  position: absolute;
+  ::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    padding: 1px;
+    background: linear-gradient(
+      ${(props) => props.gradientAngle}deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(255, 255, 255, 0.7) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    background-blend-mode: overlay;
+  }
 `;
 
-const Title = styled.h2`
-  margin: 0;
-  font-size: 24px;
+const CardTitle = styled.h3`
   font-style: normal;
   font-weight: 590;
   font-size: 17px;
   line-height: 20px;
-
-  color: #ffffff;
+  margin: 10px 0;
 `;
 
 const Divider = styled.hr`
@@ -76,45 +173,62 @@ const Divider = styled.hr`
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.5) ${(props) => props.gradientAngle}%,
     rgba(255, 255, 255, 0) 100%
   );
-  margin: 12px 0;
 `;
 
-const Subtitle = styled.h3`
+const CardSubtitle = styled.h4`
   font-style: normal;
   font-weight: 510;
   font-size: 15px;
   line-height: 18px;
-  /* identical to box height */
-
+  margin: 10px 0;
   color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 8px;
 `;
 
-const Text = styled.p`
-  margin: 0 0 12px;
+const CardText = styled.p`
   font-style: normal;
   font-weight: 400;
   font-size: 13px;
   line-height: 24px;
-  /* or 185% */
-
   color: rgba(255, 255, 255, 0.7);
 `;
 
 const Author = styled.div`
   display: flex;
   align-items: center;
+  margin-top: 15px;
+  position: relative;
 `;
 
-const Avatar = styled.img`
+const AuthorAvatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
-  margin-right: 8px;
+  margin-right: 10px;
+  background: url(${cardAvatar});
+  background-size: 40px 40px;
+  ::before {
+    content: "";
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    inset: 0;
+    border-radius: 50%;
+    padding: 1px;
+    background: linear-gradient(
+      ${(props) => props.gradientAngle}deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(255, 255, 255, 0.7) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    background-blend-mode: overlay;
+  }
 `;
 
 const AuthorName = styled.span`
@@ -122,19 +236,6 @@ const AuthorName = styled.span`
   font-weight: 510;
   font-size: 13px;
   line-height: 16px;
-  /* identical to box height */
 
   color: rgba(255, 255, 255, 0.8);
-`;
-
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #333;
-  background-image: url(${backgroundImage});
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 `;
