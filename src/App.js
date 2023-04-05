@@ -15,6 +15,7 @@ function App() {
   const [scale, setScale] = useState(1);
   const cardRef = useRef();
   const [gradientAngle, setGradientAngle] = useState(0);
+  const [shinePosition, setShinePosition] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e) => {
     const rect = cardRef.current.getBoundingClientRect();
@@ -25,6 +26,9 @@ function App() {
 
     const angle = Math.atan2(y, x) * (180 / Math.PI);
     setGradientAngle(angle);
+    const shineX = e.clientX - rect.left;
+    const shineY = e.clientY - rect.top;
+    setShinePosition({ x: shineX, y: shineY });
   };
 
   const handleMouseEnter = () => {
@@ -45,6 +49,7 @@ function App() {
         rotateY={rotateY}
         scale={scale}
         gradientAngle={gradientAngle}
+        shinePosition={shinePosition}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -108,6 +113,14 @@ const Card = styled.div`
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: ${({ shinePosition }) =>
+      `radial-gradient(circle at ${shinePosition.x}px ${shinePosition.y}px, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 40%)`};
   }
 `;
 
